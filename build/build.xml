@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- The following line will include the composer autoloader file so that phing can find
+pear packages installed and managed by composer -->
+<php expression="include('vendor/autoload.php')"/>
 <!-- **Phing Drupal Template** is a XML build file for the
 **[Phing build system](http://www.phing.info/trac/)** with targets and
 configuration designed for **[Drupal](http://drupal.org)** projects.
