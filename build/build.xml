@@ -130,7 +130,6 @@ Make sure that our code is clean and functional. -->
                                  clean,
                                  lint-php-custom,
                                  lint-js-custom,
-                                 lint-css-custom,
                                  check-php-debug,
                                  check-js-debug,
                                  simpletest"/>
