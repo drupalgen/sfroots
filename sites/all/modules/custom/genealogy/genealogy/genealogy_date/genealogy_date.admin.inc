@@ -41,8 +41,6 @@ function genealogy_date_admin_settings($form, &$form_state) {
 }
 
 function genealogy_date_admin_settings_validate($form, &$form_state) {
-  //dsm($form);
-  //dsm($form_state);
 }
 
 
