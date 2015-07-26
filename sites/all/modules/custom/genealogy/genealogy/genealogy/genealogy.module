@@ -4,6 +4,5 @@
  * Modifications for the Genealogy module that don't live elsewhere
  */
 function genealogy_form_alter(&$form, &$form_state, $form_id) {
-  //dsm($form_id);
 }
 
