@@ -1,0 +1,326 @@
+<?php
+/**
+ * @file
+ * A date field capable of storing genealogical dates
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function genealogy_date_menu() {
+  $items = array();
+  $items['admin/config/genealogy/date'] = array(
+    'title' => 'Genealogy Date settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('genealogy_date_admin_settings'),
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_CALLBACK,
+    'file' => 'genealogy_date.admin.inc',
+  );
+  return $items;
+}
+
+/**
+ * Implements hook_menu_alter().
+ */
+/**
+function genealogy_date_menu_alter(&$items) {
+  if(!isset($items['admin/config/genealogy'])) {
+    $items['admin/config/genealogy'] = array(
+      'title' => 'Genealogy Module Settings',
+      'page callback' => array('genealogy_date_overall_admin_settings'),
+      'access arguments' => array('administer site configuration'),
+    );
+  }
+}
+**/
+/**
+ * Implements hook_field_info();
+ *
+ * Provides the description of the field
+ */
+function genealogy_date_field_info() {
+  return array(
+    'genealogy_date' => array(
+      'label' => t('Genealogical Date'),
+      'description' => t('Genealogical date \(Abt/Bef/Aft dd MMM YYYY\)'),
+      'default_widget' => 'genealogy_date_text',
+      'default_formatter' => 'genealogy_date_simple_text',
+    ),
+  );
+}
+
+/**
+ * Implements hook_field_is_empty()
+ */
+function genealogy_date_field_is_empty($item, $field) {
+  return empty($item['orig_text']);
+}
+
+/**
+ * Implements hook_field_formatter_info()
+ */
+function genealogy_date_field_formatter_info() {
+  return array(
+    'genealogy_date_simple_text' => array(
+      'label' => t('Genealogical Date Format'),
+      'field types' => array('genealogy_date'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_field_formatter_view()
+ */
+function genealogy_date_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
+  $element = array();
+  
+  switch ($display['type']) {
+    case 'genealogy_date_simple_text':
+      foreach($items as $delta => $item) {
+        $element[$delta]['#markup'] = $item['orig_text'];
+      }
+      break;
+  }
+  return $element;
+}
+
+/**
+ * Implements hook_field_widget_info()
+ */
+function genealogy_date_field_widget_info() {
+  return array(
+    'genealogy_date_text' => array(
+      'label' => t('Genealogical Date'),
+      'field types' => array(
+        'genealogy_date',
+      ),
+    ),
+  );
+}
+
+/**
+ * Implements hook_field_widget_form()
+ */
+function genealogy_date_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
+  $value = isset($items[$delta]['orig_text']) ? $items[$delta]['orig_text'] : '';
+  $value2 = isset($items[$delta]['index_text']) ? $items[$delta]['index_text'] : '';
+  $element = array(
+    '#delta' => $delta,
+  );
+  
+  $element['orig_text'] = array(
+    '#attributes' => array(
+      'class' => array('edit-genealogical-date'),
+    ),
+    '#title' => $instance['label'],
+    '#type' => 'textfield',
+    '#default_value' => $value,
+    '#size' => 30,
+    '#maxlength' => 60,
+    '#description' => t('Enter the genealogical date for the event.  Genealogical dates are in the format of dd MMM yyyy, or Abt (Bef or Aft) MMM yyyy.  MMM yyyy and yyyy are also valid.'),
+  );
+  $element['index_text'] = array(
+    '#attributes' => array(
+      'class' => array('index-genealogical-date'),
+    ),
+    '#title' => 'Indexed Date',
+    '#type' => 'hidden',
+    '#default_value' => $value2,
+  );
+  
+  return $element;
+}
+
+/**
+ * Implements hook_field_validate()
+ *
+ * Verifies that the date field is valid, and formats the index field based on the date field input
+ */
+function genealogy_date_field_validate($entity_type, $entity, $field, $instance, $langcode, $items, &$errors) {
+
+}
+
+/**
+ * Implements hook_field_presave()
+ */
+function genealogy_date_field_presave($entity_type, $entity, $field, $instance, $langcode, &$items) {
+	$aftarray = variable_get('genealogy_date_after_acronyms', NULL);
+  
+  foreach($items as $key => $item) {
+  
+    if ($item['orig_text']) {
+      //convert any characters to all uppercase
+      $orig_text = strtoupper(trim($item['orig_text']));
+      $dateparts = array();
+      $dateparts = explode(" ", $orig_text);
+      
+      $ptr = _genealogy_date_date_range($dateparts);
+      // breaking date into pieces in preparation for generating the indexed date....
+      $reversedate = _genealogy_date_break_into_components($ptr, $dateparts);
+      $tempyear = _genealogy_date_get_year_component($ptr, $dateparts);
+      
+      //Setting the date components.....
+      if (is_numeric($tempyear)) {
+        $newyear = $tempyear;
+        $ptr--;
+        
+        $foundit = 0; //julian (1), hebrew(2)  or numeric(0) month flag
+        
+        $newmonth = _genealogy_date_get_month_component($dateparts, $ptr, $foundit);
+        
+        if ($foundit) {
+          $ptr--;	
+          $tempday = $dateparts[$ptr];
+        }
+        if ($foundit == 1) {
+          
+          //if we're doing mm/dd/yyyy, we need to switch month and day here
+          //it could be numeric, or it could be in $months, if we've switched.
+          if ($reversedate) {
+            $temppart = $newmonth;
+            $newmonth = $tempday;
+            $tempday = $temppart;
+          }
+          
+          if (is_numeric( $tempday ) && strlen($tempday) <= 2 ) {
+            $newday = sprintf( "%02d", $tempday );
+            $ptr--;
+            if ($ptr < 0) $ptr = 0;
+            $str = substr(strtoupper($dateparts[$ptr]),0,3);
+            if (in_array( $str, $aftarray )) {
+              $newday++;
+              $lastday = variable_get('genealogy_date_month_lastdays', NULL);
+              if( $newday > $lastday[$newmonth] ) {
+                $newday = 0;
+                if( $newmonth == 12 ) $newyear++;
+                $newmonth = $newmonth < 12 ? $newmonth + 1 : 1;
+              }
+            }
+            elseif (in_array($str, variable_get('genealogy_date_before_acronyms', NULL))) {
+              $newday --;
+            }
+            elseif (in_array($str, array('ABT'))) {
+              $newday;
+            }
+          }
+          else {
+            $tempday2 = substr(strtoupper($tempday),0,3);
+            $newday = 0;
+            if (in_array( $tempday2, $aftarray, TRUE )) {
+              if($newmonth == 12) $newyear++;
+              $newmonth = $newmonth < 12 ? $newmonth + 1 : 1;
+            }
+          }
+        }
+        elseif($foundit == 2 ) {
+          //Hebrew
+          _genealogy_date_hebrew_date($newmonth, $newday, $newyear, $tempday);
+        }
+        else {
+          $newmonth = 0;
+          $newday = 0;
+          if (in_array($newmonth, $aftarray, TRUE)) {
+            $newyear++;
+          }  
+        }
+      }
+      $newdate = sprintf("%04d-%02d-%02d", $newyear,$newmonth,$newday);
+    }
+    else {
+      $newdate = "0000-00-00";
+    }    
+    $items[$key]['index_text'] = $newdate; 
+  }
+}
+
+function _genealogy_date_hebrew_date(&$newmonth, &$newday, &$newyear, &$tempday) {
+  //Hebrew
+  if (!$tempday) $tempday = 1;
+  $gregoriandate = JDtoGregorian( JewishToJD( $newmonth, $tempday, $newyear ) );
+  $newdate = explode("/", $gregoriandate);
+  $newyear = $newdate[2];
+  $newmonth = $newdate[0];
+  $newday = $newdate[1];
+}
+function _genealogy_date_date_range($dateparts) {
+  // looking for a date range...
+  $found = array_search("TO", $dateparts);
+  if (!$found) $found = array_search("AND", $dateparts);
+  return $found ? $found - 1 : count($dateparts) - 1;
+}
+
+function _genealogy_date_break_into_components(&$ptr, &$dateparts) {
+  
+  $newparts = array();
+  $newparts = explode(variable_get('genealogy_date_preferred_separator', NULL), $dateparts[$ptr]);
+  //if number of parts is 3, insert them into array at $ptr, move $ptr up
+  if (count($newparts) == 3) {
+    $dateparts[$ptr++] = $newparts[0];
+    $dateparts[$ptr++] = $newparts[1];
+    $dateparts[$ptr] = $newparts[2];
+    $reversedate = variable_get('genealogy_date_date_order', NULL);
+  }
+  else {
+    $reversedate = 0;
+  }
+  return $reversedate;
+}
+
+function _genealogy_date_get_year_component($ptr, $dateparts) {
+  $slashpos = strpos($dateparts[$ptr],"/");
+  if ($slashpos) {
+    $wholeyear1 = strtok($dateparts[$ptr],"/");
+    $wholeyear2 = strtok("/");
+    $len = -1 * strlen($wholeyear2);
+    $len1 = strlen($wholeyear1);
+    $century = substr($wholeyear1,0,$len1+$len);
+    $year1 = substr($wholeyear1,$len1+$len);
+    $year2 = $wholeyear2;
+    if ($year1 > $year2) $century++;
+    $tempyear = $century . $year2;
+  }
+  else {
+    $len = -1 * strlen($dateparts[$ptr]);
+    if ($len < -4) $len = -4;
+    $tempyear = trim(substr($dateparts[$ptr],$len));
+    $dash = strpos($tempyear,"-");
+    if ($dash !== false)
+      $tempyear = substr($tempyear,$dash+1);
+  }
+  return $tempyear;
+}
+
+function _genealogy_date_get_month_component(&$dateparts, &$ptr, &$foundit) {
+  $months = variable_get('genealogy_date_julian_months', NULL);  
+	$hebrewmonths = variable_get('genealogy_date_hebrew_months', NULL);
+
+  $tempmonth = trim(substr(strtoupper($dateparts[$ptr]),0,3));
+  //if it's in $months, or it's numeric and we're doing dd-mm-yyyy, proceed. If it's numeric and we're doing mm-dd-yyyy, then flip day and month
+  
+  if (isset($months[$tempmonth])) {
+    $newmonth = $months[$tempmonth];
+    $foundit = 1;
+  }
+  elseif (isset($hebrewmonths[$tempmonth])) {
+    $newmonth = $hebrewmonths[$tempmonth];
+    $foundit = 2;
+  }
+  elseif (is_numeric( $tempmonth ) && strlen($tempmonth) <= 2) {
+    $newmonth = intval( $tempmonth );
+    $foundit = 1;
+  } else {
+    $newmonth = $tempmonth;
+  }
+
+  return $newmonth;
+}
+
+/**
+function genealogy_date_overall_admin_settings() {
+  $output = NULL;
+  $link = l(t('Genealogy Date settings'), 'admin/config/genealogy/date');
+  $output .= theme('item_list', array($link));
+  return $output;
+}
+**/

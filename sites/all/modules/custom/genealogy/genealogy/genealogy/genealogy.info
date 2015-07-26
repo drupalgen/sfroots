@@ -1,0 +1,11 @@
+name = Genealogy
+description = General customizations for the Genealogy module that don't live elsewhere
+package = Genealogy
+core = 7.x
+php = 5.x
+
+version = 7.x-1.0
+
+dependencies[] = entity
+
+stylesheets[all][] = css/genealogy.css
