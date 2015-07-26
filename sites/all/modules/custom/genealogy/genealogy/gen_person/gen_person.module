@@ -4,7 +4,6 @@
  */
 
 function gen_person_form_alter(&$form, &$form_state, $form_id) {
-    //dsm($form_id);
 }
 /**
  * Implements hook_form_FORM_ID_alter().
@@ -13,7 +12,6 @@ function gen_person_form_person_node_form_alter(&$form, &$form_state, $form_id) 
     array_unshift($form['#validate'], 'gen_person_form_person_node_form_validate');
     //$form['#validate'][0] = 'gen_person_form_person_node_form_validate';
     //$form['#validate'][1] = 'node_form_validate';
-    //dsm($form);
 }
 
 /**
