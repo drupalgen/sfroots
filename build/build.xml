@@ -103,7 +103,7 @@ Drush Make and Simpletest support has been sponsored by [DBC](http://www.dbc.dk/
 <project name="phing-drupal" default="build" phingVersion="2.4.11">
 <!-- The following line will include the composer autoloader file so that phing can find
 pear packages installed and managed by composer -->
-<php expression="include('vendor/autoload.php')"/>
+<php expression="include('/usr/local/bin/vendor/autoload.php')"/>
 
 <!-- ## Main targets -->
 
