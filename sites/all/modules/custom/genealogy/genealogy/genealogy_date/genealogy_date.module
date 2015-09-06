@@ -21,20 +21,6 @@ function genealogy_date_menu() {
 }
 
 /**
- * Implements hook_menu_alter().
- */
-/**
-function genealogy_date_menu_alter(&$items) {
-  if(!isset($items['admin/config/genealogy'])) {
-    $items['admin/config/genealogy'] = array(
-      'title' => 'Genealogy Module Settings',
-      'page callback' => array('genealogy_date_overall_admin_settings'),
-      'access arguments' => array('administer site configuration'),
-    );
-  }
-}
-**/
-/**
  * Implements hook_field_info();
  *
  * Provides the description of the field
@@ -147,9 +133,9 @@ function genealogy_date_field_validate($entity_type, $entity, $field, $instance,
 function genealogy_date_field_presave($entity_type, $entity, $field, $instance, $langcode, &$items) {
 	$aftarray = variable_get('genealogy_date_after_acronyms', NULL);
   
-  foreach($items as $key => $item) {
+  foreach($items as $key => $item) { // foreach $items...
   
-    if ($item['orig_text']) {
+    if ($item['orig_text']) {  // if $item['orig_text']...
       //convert any characters to all uppercase
       $orig_text = strtoupper(trim($item['orig_text']));
       $dateparts = array();
@@ -161,7 +147,7 @@ function genealogy_date_field_presave($entity_type, $entity, $field, $instance, 
       $tempyear = _genealogy_date_get_year_component($ptr, $dateparts);
       
       //Setting the date components.....
-      if (is_numeric($tempyear)) {
+      if (is_numeric($tempyear)) {  // If $tempyear is numeric....
         $newyear = $tempyear;
         $ptr--;
         
@@ -173,65 +159,68 @@ function genealogy_date_field_presave($entity_type, $entity, $field, $instance, 
           $ptr--;	
           $tempday = $dateparts[$ptr];
         }
-        if ($foundit == 1) {
-          
-          //if we're doing mm/dd/yyyy, we need to switch month and day here
-          //it could be numeric, or it could be in $months, if we've switched.
-          if ($reversedate) {
-            $temppart = $newmonth;
-            $newmonth = $tempday;
-            $tempday = $temppart;
-          }
-          
-          if (is_numeric( $tempday ) && strlen($tempday) <= 2 ) {
-            $newday = sprintf( "%02d", $tempday );
-            $ptr--;
-            if ($ptr < 0) $ptr = 0;
-            $str = substr(strtoupper($dateparts[$ptr]),0,3);
-            if (in_array( $str, $aftarray )) {
-              $newday++;
-              $lastday = variable_get('genealogy_date_month_lastdays', NULL);
-              if( $newday > $lastday[$newmonth] ) {
-                $newday = 0;
-                if( $newmonth == 12 ) $newyear++;
-                $newmonth = $newmonth < 12 ? $newmonth + 1 : 1;
-              }
-            }
-            elseif (in_array($str, variable_get('genealogy_date_before_acronyms', NULL))) {
-              $newday --;
-            }
-            elseif (in_array($str, array('ABT'))) {
-              $newday;
-            }
-          }
-          else {
-            $tempday2 = substr(strtoupper($tempday),0,3);
+
+  switch($foundit) { // start switch
+    case 1:
+      //if we're doing mm/dd/yyyy, we need to switch month and day here
+      //it could be numeric, or it could be in $months, if we've switched.
+      if ($reversedate) {
+        $temppart = $newmonth;
+        $newmonth = $tempday;
+        $tempday = $temppart;
+      }
+      if (is_numeric( $tempday ) && strlen($tempday) <= 2 ) {
+        $newday = sprintf( "%02d", $tempday );
+        $ptr--;
+        if ($ptr < 0) $ptr = 0;
+        $str = substr(strtoupper($dateparts[$ptr]),0,3);
+        if (in_array( $str, $aftarray )) {
+          $newday++;
+          $lastday = variable_get('genealogy_date_month_lastdays', NULL);
+          if( $newday > $lastday[$newmonth] ) {
             $newday = 0;
-            if (in_array( $tempday2, $aftarray, TRUE )) {
-              if($newmonth == 12) $newyear++;
-              $newmonth = $newmonth < 12 ? $newmonth + 1 : 1;
-            }
+            if( $newmonth == 12 ) $newyear++;
+            $newmonth = $newmonth < 12 ? $newmonth + 1 : 1;
           }
         }
-        elseif($foundit == 2 ) {
-          //Hebrew
-          _genealogy_date_hebrew_date($newmonth, $newday, $newyear, $tempday);
+        elseif (in_array($str, variable_get('genealogy_date_before_acronyms', NULL))) {
+          $newday --;
         }
-        else {
-          $newmonth = 0;
-          $newday = 0;
-          if (in_array($newmonth, $aftarray, TRUE)) {
-            $newyear++;
-          }  
+        elseif (in_array($str, array('ABT'))) {
+          $newday;
         }
       }
+      else {
+        $tempday2 = substr(strtoupper($tempday),0,3);
+        $newday = 0;
+        if (in_array( $tempday2, $aftarray, TRUE )) {
+          if($newmonth == 12) $newyear++;
+          $newmonth = $newmonth < 12 ? $newmonth + 1 : 1;
+        }
+      }
+      break;
+
+    case 2:
+        //Hebrew
+        _genealogy_date_hebrew_date($newmonth, $newday, $newyear, $tempday);
+      break;
+
+    default:
+      $newmonth = 0;
+      $newday = 0;
+      if (in_array($newmonth, $aftarray, TRUE)) {
+        $newyear++;
+      }  
+  } // end switch
+
+      }  // end If $tempyear is numeric....
       $newdate = sprintf("%04d-%02d-%02d", $newyear,$newmonth,$newday);
     }
     else {
       $newdate = "0000-00-00";
-    }    
+    } // end if $item['orig_text']...    
     $items[$key]['index_text'] = $newdate; 
-  }
+  } // end foreach $items...
 }
 
 function _genealogy_date_hebrew_date(&$newmonth, &$newday, &$newyear, &$tempday) {
@@ -315,12 +304,3 @@ function _genealogy_date_get_month_component(&$dateparts, &$ptr, &$foundit) {
 
   return $newmonth;
 }
-
-/**
-function genealogy_date_overall_admin_settings() {
-  $output = NULL;
-  $link = l(t('Genealogy Date settings'), 'admin/config/genealogy/date');
-  $output .= theme('item_list', array($link));
-  return $output;
-}
-**/

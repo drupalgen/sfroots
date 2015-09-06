@@ -4,5 +4,7 @@ package = Fields
 core = 7.x
 php = 5.x
 
+configure = admin/config/genealogy/date
+
 files[] = genealogy_date.admin.inc
 

@@ -40,10 +40,9 @@ function genealogy_date_admin_settings($form, &$form_state) {
   return $form;
 }
 
-function genealogy_date_admin_settings_validate($form, &$form_state) {
-}
-
-
+/**
+ * Submit callback for genealogy_date_admin_settings().
+ */
 function genealogy_date_admin_settings_submit($form, &$form_state) {
   variable_set('genealogy_date_date_order', $form_state['values']['date_order']);
 
@@ -64,14 +63,27 @@ function genealogy_date_admin_settings_submit($form, &$form_state) {
   variable_set('genealogy_date_after_acronyms', $aft);
 }
 
+/**
+ * Convenience wrapper for _genealogy_date_admin_settings_get_acronyms().
+ *
+ * For the 'before' option.
+ */
 function _genealogy_date_admin_settings_get_before_acronyms($form_state) {
   return _genealogy_date_admin_settings_get_acronyms($form_state, 'before');
 }
 
+/**
+ * Convenience wrapper for _genealogy_date_admin_settings_get_acronyms().
+ *
+ * For the 'after' option.
+ */
 function _genealogy_date_admin_settings_get_after_acronyms($form_state) {
   return _genealogy_date_admin_settings_get_acronyms($form_state, 'after');
 }
 
+/**
+ * Private funtion that returns genealogy_date acronyms in the variables table.
+ */
 function _genealogy_date_admin_settings_get_acronyms($acronyms, $set) {
   $output = NULL;
   if(isset($form_state['values']) && isset($form_state['values'][$set . '_acronyms'])) {
@@ -85,4 +97,3 @@ function _genealogy_date_admin_settings_get_acronyms($acronyms, $set) {
   }
   return $output;
 }
-?>
