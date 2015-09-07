@@ -192,7 +192,7 @@ function genealogy_date_field_presave($entity_type, $entity, $field, $instance, 
               }
             }
             else {
-              $tempday2 = substr(strtoupper($tempday), 0, 3);
+              $tempday2 = drupal_substr(drupal_strtoupper($tempday), 0, 3);
               $newday = 0;
               if (in_array( $tempday2, $aftarray, TRUE )) {
                 if ($newmonth == 12) $newyear++;
