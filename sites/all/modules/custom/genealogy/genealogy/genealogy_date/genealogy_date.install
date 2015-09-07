@@ -59,19 +59,19 @@ function genealogy_date_install() {
                         "ELU" => 13);
   variable_set('genealogy_date_hebrew_months', $hebrewmonths);
 
-  $before = array( "BEF" );
+  $before = array("BEF");
   variable_set('genealogy_date_before_acronyms', $before);
 
-	$after = array( "AFT" );
+  $after = array("AFT");
   variable_set('genealogy_date_after_acronyms', $after);
 
-	$lastday = array(31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31);
+  $lastday = array(31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31);
   variable_set('genealogy_date_month_lastdays', $lastday);
 
-	$preferred_separator = "-";  //this character separates the components in a numeric date, as in "MM/DD/YYYY"
+  $preferred_separator = "-";  // this character separates the components in a numeric date, as in "MM/DD/YYYY"
   variable_set('genealogy_date_preferred_separator', $preferred_separator);
 
-	$numeric_date_order = 0;  //0 = MM/DD/YYYY; 1 = DD/MM/YYYY
+  $numeric_date_order = 0;  // 0 = MM/DD/YYYY; 1 = DD/MM/YYYY.
   variable_set('genealogy_date_date_order', $numeric_date_order);
 }
 

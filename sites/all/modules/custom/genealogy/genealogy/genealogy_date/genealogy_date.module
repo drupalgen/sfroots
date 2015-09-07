@@ -60,10 +60,10 @@ function genealogy_date_field_formatter_info() {
  */
 function genealogy_date_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
   $element = array();
-  
+
   switch ($display['type']) {
     case 'genealogy_date_simple_text':
-      foreach($items as $delta => $item) {
+      foreach ($items as $delta => $item) {
         $element[$delta]['#markup'] = $item['orig_text'];
       }
       break;
@@ -94,12 +94,12 @@ function genealogy_date_field_widget_form(&$form, &$form_state, $field, $instanc
   $element = array(
     '#delta' => $delta,
   );
-  
+
   $element['orig_text'] = array(
     '#attributes' => array(
       'class' => array('edit-genealogical-date'),
     ),
-    '#title' => $instance['label'],
+    '#title' => check_plain($instance['label']),
     '#type' => 'textfield',
     '#default_value' => $value,
     '#size' => 30,
@@ -114,7 +114,7 @@ function genealogy_date_field_widget_form(&$form, &$form_state, $field, $instanc
     '#type' => 'hidden',
     '#default_value' => $value2,
   );
-  
+
   return $element;
 }
 
@@ -131,33 +131,33 @@ function genealogy_date_field_validate($entity_type, $entity, $field, $instance,
  * Implements hook_field_presave().
  */
 function genealogy_date_field_presave($entity_type, $entity, $field, $instance, $langcode, &$items) {
-	$aftarray = variable_get('genealogy_date_after_acronyms', NULL);
-  
+  $aftarray = variable_get('genealogy_date_after_acronyms', NULL);
+
   foreach ($items as $key => $item) { // foreach $items...
-  
+
     if ($item['orig_text']) {  // if $item['orig_text']...
       //convert any characters to all uppercase
-      $orig_text = strtoupper(trim($item['orig_text']));
+      $orig_text = drupal_strtoupper(trim($item['orig_text']));
       $exploded_date = array();
       $exploded_date = explode(" ", $orig_text);
-      
+
       $loop_counter = _genealogy_date_date_range($exploded_date);
-      
+
       // breaking date into pieces in preparation for generating the indexed date....
       $reversedate = _genealogy_date_break_into_components($loop_counter, $exploded_date);
       $tempyear = _genealogy_date_get_year_component($loop_counter, $exploded_date);
-      
+
       //Setting the date components.....
       if (is_numeric($tempyear)) {  // If $tempyear is numeric....
         $newyear = $tempyear;
         $loop_counter--;
-        
+
         $foundit = 0; //julian (1), hebrew(2)  or numeric(0) month flag
-        
+
         $newmonth = _genealogy_date_get_month_component($exploded_date, $loop_counter, $foundit);
-        
+
         if ($foundit) {
-          $loop_counter--;	
+          $loop_counter--;
           $tempday = $exploded_date[$loop_counter];
         }
 
@@ -170,11 +170,11 @@ function genealogy_date_field_presave($entity_type, $entity, $field, $instance, 
               $newmonth = $tempday;
               $tempday = $temppart;
             }
-            if (is_numeric( $tempday ) && strlen($tempday) <= 2 ) {
+            if (is_numeric( $tempday ) && drupal_strlen($tempday) <= 2 ) {
               $newday = sprintf("%02d", $tempday);
               $loop_counter--;
               if ($loop_counter < 0) $loop_counter = 0;
-              $str = substr(strtoupper($exploded_date[$loop_counter]), 0, 3);
+              $str = drupal_substr(drupal_strtoupper($exploded_date[$loop_counter]), 0, 3);
               if (in_array( $str, $aftarray )) {
                 $newday++;
                 $lastday = variable_get('genealogy_date_month_lastdays', NULL);
@@ -192,7 +192,7 @@ function genealogy_date_field_presave($entity_type, $entity, $field, $instance, 
               }
             }
             else {
-              $tempday2 = substr(strtoupper($tempday),0,3);
+              $tempday2 = substr(strtoupper($tempday), 0, 3);
               $newday = 0;
               if (in_array( $tempday2, $aftarray, TRUE )) {
                 if ($newmonth == 12) $newyear++;
@@ -200,18 +200,18 @@ function genealogy_date_field_presave($entity_type, $entity, $field, $instance, 
               }
             }
             break;
-      
+
           case 2:
               //Hebrew
               _genealogy_date_hebrew_date($newmonth, $newday, $newyear, $tempday);
             break;
-      
+
           default:
             $newmonth = 0;
             $newday = 0;
             if (in_array($newmonth, $aftarray, TRUE)) {
               $newyear++;
-            }  
+            }
         } // end switch
 
       }  // end If $tempyear is numeric....
@@ -219,8 +219,8 @@ function genealogy_date_field_presave($entity_type, $entity, $field, $instance, 
     }
     else {
       $newdate = "0000-00-00";
-    } // end if $item['orig_text']...    
-    $items[$key]['index_text'] = $newdate; 
+    } // end if $item['orig_text']...
+    $items[$key]['index_text'] = $newdate;
   } // end foreach $items...
 }
 
@@ -283,21 +283,21 @@ function _genealogy_date_get_year_component($loop_counter, $exploded_date) {
   if ($slashpos) {
     $wholeyear1 = strtok($exploded_date[$loop_counter], "/");
     $wholeyear2 = strtok("/");
-    $len = -1 * strlen($wholeyear2);
-    $len1 = strlen($wholeyear1);
-    $century = substr($wholeyear1, 0, $len1 + $len);
-    $year1 = substr($wholeyear1, $len1 + $len);
+    $len = -1 * drupal_strlen($wholeyear2);
+    $len1 = drupal_strlen($wholeyear1);
+    $century = drupal_substr($wholeyear1, 0, $len1 + $len);
+    $year1 = drupal_substr($wholeyear1, $len1 + $len);
     $year2 = $wholeyear2;
     if ($year1 > $year2) $century++;
     $tempyear = $century . $year2;
   }
   else {
-    $len = -1 * strlen($exploded_date[$loop_counter]);
+    $len = -1 * drupal_strlen($exploded_date[$loop_counter]);
     if ($len < -4) $len = -4;
-    $tempyear = trim(substr($exploded_date[$loop_counter], $len));
-    $dash = strpos($tempyear, "-");
-    if ($dash !== false)
-      $tempyear = substr($tempyear, $dash+1);
+    $tempyear = trim(drupal_substr($exploded_date[$loop_counter], $len));
+    $dash = drupal_strpos($tempyear, "-");
+    if ($dash !== FALSE)
+      $tempyear = drupal_substr($tempyear, $dash+1);
   }
   return $tempyear;
 }
@@ -306,10 +306,10 @@ function _genealogy_date_get_year_component($loop_counter, $exploded_date) {
  * Helper function that determines the month component of the index date.
  */
 function _genealogy_date_get_month_component(&$exploded_date, &$loop_counter, &$foundit) {
-  $months = variable_get('genealogy_date_julian_months', NULL);  
-	$hebrewmonths = variable_get('genealogy_date_hebrew_months', NULL);
+  $months = variable_get('genealogy_date_julian_months', NULL);
+  $hebrewmonths = variable_get('genealogy_date_hebrew_months', NULL);
 
-  $tempmonth = trim(substr(strtoupper($exploded_date[$loop_counter]), 0, 3));
+  $tempmonth = trim(drupal_substr(drupal_strtoupper($exploded_date[$loop_counter]), 0, 3));
 
   // If it's in $months, or it's numeric and we're doing dd-mm-yyyy, proceed.
   // If it's numeric and we're doing mm-dd-yyyy, then flip day and month.
@@ -321,10 +321,11 @@ function _genealogy_date_get_month_component(&$exploded_date, &$loop_counter, &$
     $newmonth = $hebrewmonths[$tempmonth];
     $foundit = 2;
   }
-  elseif (is_numeric($tempmonth) && strlen($tempmonth) <= 2) {
+  elseif (is_numeric($tempmonth) && drupal_strlen($tempmonth) <= 2) {
     $newmonth = intval($tempmonth);
     $foundit = 1;
-  } else {
+  }
+  else {
     $newmonth = $tempmonth;
   }
 
