@@ -15,7 +15,7 @@ function genealogy_date_admin_settings($form, &$form_state) {
     '#default_value' => variable_get('genealogy_date_date_order', '0'),
     '#description' => t('Order that components of a date should be entered.  Defaults to DD MMM YYYY.'),
   );
-  
+
   $form['before_acronyms'] = array(
     '#type' => 'textarea',
     '#title' => t('Set "Before" acronyms'),
@@ -48,7 +48,7 @@ function genealogy_date_admin_settings_submit($form, &$form_state) {
 
   $before_acronyms = explode("\n", $form_state['values']['before_acronyms']);
   foreach ($before_acronyms as $before_acronym) {
-    if(strlen(trim($before_acronym)) > 0) {
+    if (drupal_strlen(trim($before_acronym)) > 0) {
       $bef[] = trim($before_acronym);
     }
   }
@@ -56,7 +56,7 @@ function genealogy_date_admin_settings_submit($form, &$form_state) {
 
   $after_acronyms = explode("\n", $form_state['values']['after_acronyms']);
   foreach ($after_acronyms as $after_acronym) {
-    if(strlen(trim($after_acronym)) > 0) {
+    if (drupal_strlen(trim($after_acronym)) > 0) {
       $aft[] = trim($after_acronym);
     }
   }
@@ -86,7 +86,7 @@ function _genealogy_date_admin_settings_get_after_acronyms($form_state) {
  */
 function _genealogy_date_admin_settings_get_acronyms($acronyms, $set) {
   $output = NULL;
-  if(isset($form_state['values']) && isset($form_state['values'][$set . '_acronyms'])) {
+  if (isset($form_state['values']) && isset($form_state['values'][$set . '_acronyms'])) {
     return $form_state['values'][$set . '_acronyms'];
   }
   else {

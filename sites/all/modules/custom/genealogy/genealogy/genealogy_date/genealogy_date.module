@@ -250,6 +250,12 @@ function _genealogy_date_date_range($exploded_date) {
   return $found ? $found - 1 : count($exploded_date) - 1;
 }
 
+/**
+ * Helper function that breaks the exploded date into components.
+ *
+ * @return integer $reversedate
+ *   Indicator as to whether or not the date is reversed.
+ */
 function _genealogy_date_break_into_components(&$loop_counter, &$exploded_date) {
   $newparts = array();
   $newparts = explode(variable_get('genealogy_date_preferred_separator', NULL), $exploded_date[$loop_counter]);
@@ -268,6 +274,9 @@ function _genealogy_date_break_into_components(&$loop_counter, &$exploded_date) 
 
 /**
  * Helper function that determines the year component of the index date.
+ *
+ * @return string $tempyear
+ *   The temporary year component of the date.
  */
 function _genealogy_date_get_year_component($loop_counter, $exploded_date) {
   $slashpos = strpos($exploded_date[$loop_counter], "/");
